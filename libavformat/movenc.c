@@ -63,6 +63,7 @@ static const AVOption options[] = {
     { "rtphint", "Add RTP hint tracks", 0, AV_OPT_TYPE_CONST, {.i64 = FF_MOV_FLAG_RTP_HINT}, INT_MIN, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM, "movflags" },
     { "moov_size", "maximum moov size so it can be placed at the begin", offsetof(MOVMuxContext, reserved_moov_size), AV_OPT_TYPE_INT, {.i64 = 0}, 0, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM, 0 },
     { "empty_moov", "Make the initial moov atom empty", 0, AV_OPT_TYPE_CONST, {.i64 = FF_MOV_FLAG_EMPTY_MOOV}, INT_MIN, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM, "movflags" },
+    { "write_moov_non_data", "Write moov atom with empty tracks data", 0, AV_OPT_TYPE_CONST, {.i64 = FF_MOV_FLAG_WRITE_MOOV_NON_DATA}, INT_MIN, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM, "movflags" },
     { "frag_keyframe", "Fragment at video keyframes", 0, AV_OPT_TYPE_CONST, {.i64 = FF_MOV_FLAG_FRAG_KEYFRAME}, INT_MIN, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM, "movflags" },
     { "frag_every_frame", "Fragment at every frame", 0, AV_OPT_TYPE_CONST, {.i64 = FF_MOV_FLAG_FRAG_EVERY_FRAME}, INT_MIN, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM, "movflags" },
     { "separate_moof", "Write separate moof/mdat atoms for each track", 0, AV_OPT_TYPE_CONST, {.i64 = FF_MOV_FLAG_SEPARATE_MOOF}, INT_MIN, INT_MAX, AV_OPT_FLAG_ENCODING_PARAM, "movflags" },
@@ -5371,8 +5372,8 @@ static int mov_flush_fragment(AVFormatContext *s, int force)
         for (i = 0; i < mov->nb_streams; i++)
             if (!mov->tracks[i].entry && !is_cover_image(mov->tracks[i].st))
                 break;
-        /* Don't write the initial moov unless all tracks have data */
-        if (i < mov->nb_streams && !force)
+
+        if (i < mov->nb_streams && !force && !(mov->flags & FF_MOV_FLAG_WRITE_MOOV_NON_DATA))
             return 0;
 
         moov_size = get_moov_size(s);
